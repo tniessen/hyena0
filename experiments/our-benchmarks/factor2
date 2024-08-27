@@ -1,0 +1,26 @@
+; Repeatedly increases the value of x by some randomly selected constant a.
+(define-program add-const
+  (let x int 0)
+  (let a int (nondet))
+  (repeat
+    (observe)
+    (set x (+ x a))))
+
+; Repeatedly increases the value of y by some randomly selected constant b times
+; two
+(define-program add-const-x2
+  (let y int 0)
+  (let b int (nondet))
+  (repeat
+    (observe)
+    (set y (+ y (* 2 b)))))
+
+; Because the second program only produces sequences of even values, the first
+; program is not a refinement of the second.
+(find-counterexample
+  (forall (traces add-const)
+    (exists (traces add-const-x2)
+      (= x y))))
+
+(expect (outcome counterexample))
+(print-stats)

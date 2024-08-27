@@ -1,0 +1,70 @@
+(define-program even
+  (let x int (* 2 (nondet)))
+  (observe))
+
+(define-program odd
+  (let x int (+ 1 (* 2 (nondet))))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces even)
+    (exists (traces odd)
+      (= (trace-value even x) (trace-value odd x)))))
+
+(expect (outcome counterexample))
+
+(define-program 13*x+3
+  (let x int (nondet))
+  (let y int (+ (* 13 x) 3))
+  (observe))
+
+(define-program 11*x+45
+  (let x int (nondet))
+  (let y int (+ (* 11 x) 45))
+  (observe))
+
+(find-counterexample
+  (forall (traces 13*x+3 f)
+    (exists (traces 11*x+45 g)
+      (and (= (trace-value f x) (trace-value g x))
+           (/= (trace-value f y) (trace-value g y))))))
+
+(expect (outcome counterexample))
+
+(define-program 13*x+3-sequential
+  (let x int 0)
+  (let y int)
+  (repeat
+    (set y (+ (* 13 x) 3))
+    (observe)
+    (set x (+ x 1))))
+
+(define-program 11*x+45-sequential
+  (let x int 0)
+  (let y int)
+  (repeat
+    (set y (+ (* 11 x) 45))
+    (observe)
+    (set x (+ x 1))))
+
+(strategy (observations (max 21)))
+
+(find-counterexample
+  (forall (traces 13*x+3-sequential f)
+    (exists (traces 11*x+45-sequential g)
+      (and (= (trace-value f x) (trace-value g x))
+           (/= (trace-value f y) (trace-value g y))))))
+
+(expect (outcome no-counterexample))
+
+(strategy (observations (max 22)))
+
+(find-counterexample
+  (forall (traces 13*x+3-sequential f)
+    (exists (traces 11*x+45-sequential g)
+      (and (= (trace-value f x) (trace-value g x))
+           (/= (trace-value f y) (trace-value g y))))))
+
+(expect (outcome counterexample))

@@ -1,0 +1,35 @@
+(define-program any-integer
+  (repeat
+    (let x int (nondet))
+    (observe)))
+
+; We factorize numbers below 40,000. Thus, at least one factor must be smaller
+; than the square root of 40,000.
+(define-program factorization
+  (repeat
+    (let m int (nondet (min 0) (max 200)))
+    (let n int (nondet (min 0) (max 40000)))
+    (let i int 0)
+    (let product int 0)
+    (while (< i m)
+      (set product (+ product n))
+      (set i (+ i 1)))
+    (observe)))
+
+; The property is to be read as:
+;
+;   For any integer x greater than 31,397 and less than 40,000, there exist
+;   integers m and n such that m * n = x, m != 1, n != 1.
+;
+; In other words, the property holds if there are no primes greater than 31,397
+; (and smaller than 40,000).
+(find-counterexample
+  (forall (traces any-integer)
+    (exists (traces factorization)
+      (=> (and (> x 31397) (< x 40000))
+          (and (= x product)
+               (/= m 1)
+               (/= n 1))))))
+
+(expect (outcome counterexample))
+(print-stats)

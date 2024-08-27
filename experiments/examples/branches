@@ -1,0 +1,82 @@
+; The first program keeps adding a randomly selected constant to the variable x.
+(define-program foo
+  (let x int 0)
+  (let a int (nondet))
+  (repeat
+    (observe)
+    (set x (+ x a))))
+
+(expect (control-flow-graph foo
+  (declare x int)
+  (declare a int)
+  (init 0)
+  (block 0
+    (steps
+      (set x 0)
+      (set a (nondet)))
+    (next 1))
+  (block 1
+    (steps
+      (observe)
+      (set x (+ x a)))
+    (next 1))))
+
+; The second program keeps adding either b + 1 or 2 * b to the variable y, where
+; b is a randomly selected constant.
+(define-program bar
+  (let y int 0)
+  (let b int (nondet))
+  (repeat
+    (observe)
+    (if (nondet)
+      (then (set y (+ y (+ b 1))))
+      (else (set y (+ y (* 2 b)))))))
+
+(expect (control-flow-graph bar
+  (declare y int)
+  (declare b int)
+  (init 0)
+  (block 0
+    (steps
+      (set y 0)
+      (set b (nondet)))
+    (next 1))
+  (block 1
+    (steps
+      (observe))
+    (next ((nondet) 2 3)))
+  (block 2
+    (steps
+      (set y (+ y (+ b 1))))
+    (next 1))
+  (block 3
+    (steps
+      (set y (+ y (* 2 b))))
+    (next 1))))
+
+(strategy (observations (min 1) (max 10)))
+
+(find-counterexample
+  (forall (traces foo)
+    (exists (traces bar)
+      (= x y))))
+
+(expect (outcome no-counterexample))
+
+; The third program keeps adding either 2 * b + 1 or 2 * b to the variable y,
+; where b is a randomly selected constant.
+(define-program baz
+  (let y int 0)
+  (let b int (nondet))
+  (repeat
+    (observe)
+    (if (nondet)
+      (then (set y (+ y (+ (* b 2) 1))))
+      (else (set y (+ y (* 2 b)))))))
+
+(find-counterexample
+  (forall (traces foo)
+    (exists (traces baz)
+      (= x y))))
+
+(expect (outcome no-counterexample))

@@ -1,0 +1,17 @@
+(define-program voting
+  (let countA int 0)
+  (let countB int 0)
+  (repeat
+    (if (nondet)
+      (then (set countA (+ countA 1)))
+      (else (set countB (+ countA 1))))
+    (observe)))
+
+(find-counterexample
+  (forall (traces voting pi1)
+    (exists (traces voting pi2)
+      (and (= (trace-value pi1 countA) (trace-value pi2 countB))
+           (= (trace-value pi2 countA) (trace-value pi1 countB))))))
+
+(expect (outcome counterexample))
+(print-stats)

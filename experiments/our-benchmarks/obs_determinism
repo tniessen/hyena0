@@ -1,0 +1,21 @@
+(define-program not-obs-det
+  (let x int 0)
+  (repeat
+    (let y int x)
+    (let m int (nondet (min 0) (max 1)))
+    (if (= m 0) (then (set x (+ x 1)))
+                (else (set x (+ x 2))))
+    (if (/= y 3) (then (set x (- x m))))
+    (observe)))
+
+(define-program dummy (repeat (observe)))
+
+(find-counterexample
+  (forall (traces not-obs-det a)
+    (forall (traces not-obs-det b)
+      (exists (traces dummy)
+        (=> (= (trace-value a y) (trace-value b y))
+            (= (trace-value a x) (trace-value b x)))))))
+
+(expect (outcome counterexample))
+(print-stats)

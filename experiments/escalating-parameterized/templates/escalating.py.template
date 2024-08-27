@@ -1,0 +1,60 @@
+# This is the parameterized version of the benchmark. A counterexample exists
+# within {{N_MIN_OBS}} observations. At that point, the value of x will be at most {{MAX_VALUE_OF_X}}
+# and the value of y will be at most {{MAX_VALUE_OF_Y}}. The value of max in the second
+# program will be at most {{MAX_VALUE_OF_MAX}}.
+
+from z3 import Int, Not, Implies, BitVecSort, BitVecVal
+from floyd import FloydCFG, TS_of_CFG
+from predicate_abstraction import PredicateAbstraction
+
+from hypa import benchmark, etc
+
+class escalating(benchmark):
+    var_decls = { 'max' : int, 'b' : bool, 'y': int, 'x' : int, 'z': int }
+
+    cfg_max_diff = FloydCFG().edges([
+        (0, 1, 'init'),
+        (1, 2, 'b := *'),
+        (2, 3, 'max := max + 1'),
+        (2, 4, 'idle'),
+        (3, 1),
+        (4, 1),
+    ])
+
+    # The initial assignment of 'max' is the parameter.
+    cfg_max_diff.tr = {
+        'init': lambda s, b=0: s.assign({'max': {{INITIAL_VALUE_OF_MAX}}}),
+        'b := *': lambda s, b=0: s.assign({'b': b}),
+        'max := max + 1': lambda s, b=0: s.assume('b').assign({'max': 'max + 1'}),
+        'idle': lambda s, b=0: s.assume('Not(b)'),
+    }
+
+    cfg_pos = FloydCFG().edges([
+        (0, 1, 'init'),
+        (1, 2, '[even(x)] y := y + 1'),
+        (1, 3, '[odd(x)]  y := y + x'),
+        (2, 4, 'z := *'),
+        (3, 4, 'z := *'),
+        (4, 1, 'x := x + z')
+    ])
+
+    cfg_pos.tr = {
+        'init': lambda s, b=0: s.assign({'max': 0, 'y': 0, 'x': 0, 'z': 0}),
+        '[even(x)] y := y + 1': lambda s, b=0: s.assume('x % 2 == 0').assign({'y': 'y + 1'}),
+        '[odd(x)]  y := y + x': lambda s, b=0: s.assume('x % 2 == 1').assign({'y': 'y + x'}),
+        'z := *': lambda s, b=0: s.assign({'z': etc.nondet_int(s)}).assume('And(1 <= z, z <= 2)'),
+        'x := x + z': lambda s, b=0: s.assign({'x' : 'x + z'}),
+    }
+
+    cfgs = [cfg_pos, cfg_max_diff]
+
+    precond = "True"
+    observe = [
+        (1, 1, "_[0]['y'] <= _[1]['max']"),
+    ]
+
+    projections = (list(var_decls.keys()),) * 2
+
+    qs = 'AiE'
+
+ALL = [escalating]

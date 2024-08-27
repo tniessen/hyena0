@@ -1,0 +1,63 @@
+; Derived from benchmarks/beyond/p4_gni in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+; This file contains two different interpretations of the same benchmark
+; because the textual description of the benchmark in the hypa repository does
+; not appear to match the transition system in the same directory. We first
+; encode our understanding of the textual description (ts1), then as a separate
+; instance our understanding of the transition system (ts2).
+
+(define-program ts1
+  (let o int 0)
+  (let h int 0)
+  (repeat
+    (observe)
+    (set h (nondet))
+    (if (= h 0)
+      (then
+        (set o 0)
+        (set o 1))
+      (else
+        (set o 0)
+        (set o 1)))))
+
+(strategy (observations (max 5)))
+
+(find-counterexample
+  (forall (traces ts1 pi1)
+    (forall (traces ts1 pi2)
+      (exists (traces ts1 pi3)
+        (and (= (trace-value pi1 o)
+                (trace-value pi3 o))
+             (= (trace-value pi2 h)
+                (trace-value pi3 h)))))))
+
+(expect (outcome no-counterexample))
+
+(define-program ts2
+  (let o int 0)
+  (let h int 0)
+  (repeat
+    (observe)
+    (set h (nondet))
+    (if (= h 0)
+      (then
+        (set o (nondet (min 0) (max 1))))
+      (else
+        (set o (nondet (min 0) (max 1)))))))
+
+(strategy (observations (max 5)))
+
+(find-counterexample
+  (forall (traces ts2 pi1)
+    (forall (traces ts2 pi2)
+      (exists (traces ts2 pi3)
+        (and (= (trace-value pi1 o)
+                (trace-value pi3 o))
+             (= (trace-value pi2 h)
+                (trace-value pi3 h)))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

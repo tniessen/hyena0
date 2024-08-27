@@ -1,0 +1,30 @@
+; Repeatedly increments the value of x, except during the 6th loop iteration,
+; during which the value of x is decremented. Note that this will only be
+; visible at the 7th observation point, which is at the beginning of the loop.
+(define-program a
+  (let x int 0)
+  (let i int 0)
+  (repeat
+    (observe)
+    (if (/= i 5)
+      (then (set x (+ x 1)))
+      (else (set x (- x 1))))
+    (set i (+ i 1))))
+
+; Repeatedly increases the value of x by a random non-negative integer.
+(define-program b
+  (let x int 0)
+  (repeat
+    (observe)
+    (let t int (nondet (min 0)))
+    (set x (+ x t))))
+
+; (strategy (observations 7))
+
+(find-counterexample
+  (forall (traces a)
+    (exists (traces b)
+      (= (trace-value a x) (trace-value b x)))))
+
+(expect (outcome counterexample))
+(print-stats)

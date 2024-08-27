@@ -1,0 +1,36 @@
+(strategy (observations 1))
+
+(define-program buy
+  (let funds int (nondet))
+  (let spent int (nondet))
+  (let cost int (nondet))
+
+  (let remainingFunds int funds)
+  (let newSpent int spent)
+  (if (>= funds cost)
+    (then
+      (set remainingFunds (- remainingFunds cost))
+      (set newSpent (+ newSpent cost))))
+
+  (observe))
+
+(define-program input-driver
+  (let funds int (nondet))
+  (let spent int (nondet))
+  (let cost int (nondet))
+  (observe))
+
+(find-counterexample
+  (forall (traces buy buy1)
+    (forall (traces input-driver buy2-input)
+      (exists (traces buy buy2)
+        (=> (and (= (trace-value buy1 spent) (trace-value buy2-input spent))
+                 (= (trace-value buy1 cost) (trace-value buy2-input cost)))
+            (and (and (= (trace-value buy2-input funds) (trace-value buy2 funds))
+                      (= (trace-value buy2-input spent) (trace-value buy2 spent))
+                      (= (trace-value buy2-input cost) (trace-value buy2 cost))
+                 (and (= (trace-value buy1 newSpent) (trace-value buy2 newSpent))
+                      (= (trace-value buy1 cost) (trace-value buy2 cost))))))))))
+
+(expect (outcome counterexample))
+(print-stats)

@@ -1,0 +1,43 @@
+; Derived from benchmarks/beyond/refine2 in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts
+  (let x int)
+  (let c int)
+  (if (nondet)
+    (then
+      (set x 0)
+      (set c 0)
+      (repeat
+        (observe)
+        (set x (+ x 1))
+        (set x (+ x 1))))
+    (else
+      (set x 0)
+      (set c 1)
+      (repeat
+        (observe)
+        (set x (+ x (nondet (min 1))))
+        (set x (+ x 1))))))
+
+(strategy (observations (max 6)))
+
+;; (find-counterexample
+;;   (forall (traces ts a)
+;;     (exists (traces ts b)
+;;       (=> (= (trace-value a c) 0)
+;;           (and (= (trace-value b c) 1)
+;;                (= (trace-value a x) (trace-value b x)))))))
+
+;; (expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces ts a)
+    (exists (traces ts b)
+      (and (= (trace-value b c) 1)
+           (= (trace-value a x) (trace-value b x))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

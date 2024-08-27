@@ -1,0 +1,32 @@
+(strategy (observations 1))
+
+(define-program dummy
+  (observe))
+
+(define-program test
+  (let service_response int)
+  (if (nondet)         (then (set service_response 200))
+    (else (if (nondet) (then (set service_response 400))
+                       (else (set service_response 500)))))
+
+  (let request_result int)
+  (if (= service_response 200)
+    (then (set request_result 1))
+    (else (set request_result 0)))
+
+  (let success int)
+  (if (= request_result 0)
+    (then (set success 0))
+    (else (set success 1)))
+
+  (observe))
+
+(find-counterexample
+  (forall (traces dummy)
+    (exists (traces test test1)
+      (exists (traces test test2)
+        (/= (trace-value test1 success)
+            (trace-value test2 success))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

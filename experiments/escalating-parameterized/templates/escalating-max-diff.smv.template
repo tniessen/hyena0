@@ -1,0 +1,33 @@
+-- This is (the second program of) the parameterized version of the benchmark.
+-- A counterexample exists within {{N_MIN_OBS}} observations. At that point, the value
+-- of y will be at most {{MAX_VALUE_OF_Y}}. The value of max in this second program
+-- will be at most {{MAX_VALUE_OF_MAX}}.
+
+MODULE main
+
+VAR
+  max: 0..{{MAX_VALUE_OF_MAX}};
+  b: boolean;
+
+  y: 0..{{MAX_VALUE_OF_Y}};
+  ok: boolean;
+
+ASSIGN
+  init(max) := {{INITIAL_VALUE_OF_MAX}};
+  init(b) := { FALSE, TRUE };
+
+  init(y) := 0..{{MAX_VALUE_OF_Y}};
+  init(ok) := TRUE;
+
+  next(max) :=
+    case
+      (b) : (max + 1) mod {{MAX_VALUE_OF_MAX_PLUS_1}};
+      (!b) : max;
+    esac;
+
+  next(b) := { FALSE, TRUE };
+
+  next(y) := 0..{{MAX_VALUE_OF_Y}};
+  next(ok) := (y <= max);
+
+DEFINE

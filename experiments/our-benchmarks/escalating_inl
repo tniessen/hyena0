@@ -1,0 +1,25 @@
+(define-program escalating
+  (let x int 0)
+  (let y int 0)
+  (repeat
+    (observe)
+    (if (divided-by x 2)
+      (then (set y (+ y 1)))
+      (else (set y (+ y x))))
+    (set x (+ x (nondet (min 1) (max 2))))))
+
+(define-program max-diff
+  (let max int 15)
+  (repeat
+    (observe)
+    (set max (+ max (nondet (min 0) (max 1))))))
+
+(strategy (observations (max 10)))
+
+(find-counterexample
+  (forall (traces escalating)
+    (exists (traces max-diff)
+      (<= y max))))
+
+(expect (outcome counterexample))
+(print-stats)

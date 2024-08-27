@@ -1,0 +1,21 @@
+(define-program two-obs
+  (observe)
+  (observe))
+
+(define-program one-obs
+  (observe))
+
+
+(find-counterexample
+  (forall (traces two-obs a)
+    (exists (traces two-obs b)
+      true)))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces two-obs)
+    (exists (traces one-obs)
+      true)))
+
+(expect (outcome counterexample))

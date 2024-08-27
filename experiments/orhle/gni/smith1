@@ -1,0 +1,19 @@
+(define-program smith
+  (let secret int (nondet))
+  (let secretDriver int (nondet))
+  (let ret int)
+  (if (divided-by secret 2)
+    (then (set ret 0))
+    (else (set ret 1)))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces smith u)
+    (exists (traces smith e)
+      (and (= (trace-value u secretDriver) (trace-value e secret))
+           (= (trace-value u ret) (trace-value e ret))))))
+
+(expect (outcome counterexample))
+(print-stats)

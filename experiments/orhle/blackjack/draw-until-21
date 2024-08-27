@@ -1,0 +1,44 @@
+(define-program setup
+  (let handValue int (nondet (min 2) (max 20)))
+  (observe))
+
+(define-program play
+  (let handValue int (nondet (min 2) (max 20)))
+
+  (let result int handValue)
+  (while (< result 21)
+    (let draw int (nondet (min 1) (max 10)))
+    (set result (+ result draw)))
+
+  (observe))
+
+(expect (control-flow-graph play
+  (declare handValue int)
+  (declare result int)
+  (declare draw int)
+  (init 0)
+  (block 0
+    (steps
+      (set handValue (nondet (min 2) (max 20)))
+      (set result handValue))
+    (next ((< result 21) 1 2)))
+  (block 1
+    (steps
+      (set draw (nondet (min 1) (max 10)))
+      (set result (+ result draw)))
+    (next ((< result 21) 1 2)))
+  (block 2
+    (steps
+      (observe))
+    (next (halt)))))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces setup)
+    (exists (traces play)
+      (and (= (trace-value setup handValue) (trace-value play handValue))
+           (= (trace-value play result) 21)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

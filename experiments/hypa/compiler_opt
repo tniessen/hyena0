@@ -1,0 +1,52 @@
+; Derived from benchmarks/beyond/compiler_opt in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program source
+  (let o int 0)
+  (repeat
+    (if (nondet)
+      (then (set o (+ o 1)))
+      (else (observe)))))
+
+(expect (control-flow-graph source
+  (declare o int)
+  (init 0)
+  (block 0
+    (steps (set o 0))
+    (next ((nondet) 1 2)))
+  (block 1
+    (steps (set o (+ o 1)))
+    (next ((nondet) 1 2)))
+  (block 2
+    (steps (observe))
+    (next ((nondet) 1 2)))))
+
+(define-program target
+  (let o int 0)
+  (repeat
+    (set o (+ o (nondet (min 0))))
+    (observe)))
+
+(expect (control-flow-graph target
+  (declare o int)
+  (init 0)
+  (block 0
+    (steps (set o 0))
+    (next 1))
+  (block 1
+    (steps
+      (set o (+ o (nondet (min 0))))
+      (observe))
+    (next 1))))
+
+(strategy (observations (max 12)))
+
+(find-counterexample
+  (forall (traces source)
+    (exists (traces target)
+      (= (trace-value source o) (trace-value target o)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

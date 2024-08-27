@@ -1,0 +1,22 @@
+(define-program original
+  (let n int (nondet (min 0) (max 19)))
+  (let x int n)
+  (observe))
+
+(define-program refinement
+  (let n int (nondet))
+  (set n (+ (* n 2) 1))
+  (if (< n 0) (then (set n 0)))
+  (if (>= n 20) (then (set n (- 20 1))))
+  (let x int n)
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces refinement)
+    (exists (traces original)
+      (= (trace-value refinement x) (trace-value original x)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

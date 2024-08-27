@@ -1,0 +1,19 @@
+(define-program leak
+  (let high int (nondet))
+  (let highDriver int (nondet))
+  (let low int (nondet))
+  (let x int (+ high low))
+  (let ret int (- x high))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces leak u)
+    (exists (traces leak e)
+      (and (= (trace-value u low) (trace-value e low))
+           (= (trace-value u highDriver) (trace-value e high))
+           (= (trace-value u ret) (trace-value e ret))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

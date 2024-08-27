@@ -1,0 +1,81 @@
+(strategy (observations 1))
+
+(define-program median
+  (let a1 int (nondet))
+  (let a2 int (nondet))
+  (let b1 int (nondet))
+  (let b2 int (nondet))
+
+  (let x1 int)
+  (if (<= a1 b1)
+    (then (set x1 1))
+    (else (set x1 0)))
+  (let a3 int)
+  (if (= x1 1)
+    (then (set a3 a2))
+    (else (set a3 a1)))
+  (let b3 int)
+  (if (= x1 1)
+    (then (set b3 b1))
+    (else (set b3 b2)))
+  (let x2 int)
+  (if (<= a3 b3)
+    (then (set x2 1))
+    (else (set x2 0)))
+  (let m int)
+  (if (= x2 1)
+    (then (set m a3))
+    (else (set m b3)))
+
+  (let ret int m)
+  (observe))
+
+(define-program input-driver
+  (let a1 int (nondet))
+  (let a2 int (nondet))
+  (let b1 int (nondet))
+  (let b2 int (nondet))
+  (observe))
+
+(find-counterexample
+  (forall (traces median u)
+    (forall (traces input-driver e-input)
+      (exists (traces median e)
+        (=>
+          ; Pre
+          (and
+            ; Low
+            (= (trace-value u a1) (trace-value e-input a1))
+            (= (trace-value u a2) (trace-value e-input a2))
+
+            ; Program Preconditions (ordered and distinct).
+            (< (trace-value u a1) (trace-value u a2))
+            (< (trace-value u b1) (trace-value u b2))
+            (< (trace-value e-input b1) (trace-value e-input b2))
+
+            (/= (trace-value u a1) (trace-value u a2))
+            (/= (trace-value u a1) (trace-value u b1))
+            (/= (trace-value u a1) (trace-value u b2))
+            (/= (trace-value u a2) (trace-value u b1))
+            (/= (trace-value u a2) (trace-value u b2))
+            (/= (trace-value u b1) (trace-value u b2))
+
+            (/= (trace-value e-input a1) (trace-value e-input a2))
+            (/= (trace-value e-input a1) (trace-value e-input b1))
+            (/= (trace-value e-input a1) (trace-value e-input b2))
+            (/= (trace-value e-input a2) (trace-value e-input b1))
+            (/= (trace-value e-input a2) (trace-value e-input b2))
+            (/= (trace-value e-input b1) (trace-value e-input b2)))
+          (and
+            ; Inputs
+            (and (= (trace-value e-input a1) (trace-value e a1))
+                 (= (trace-value e-input a2) (trace-value e a2))
+                 (= (trace-value e-input b1) (trace-value e b1))
+                 (= (trace-value e-input b2) (trace-value e b2)))
+
+            ; Post
+            (=> (= (trace-value u m) (trace-value e m))
+                (= (trace-value u ret) (trace-value e ret)))))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

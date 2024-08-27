@@ -1,0 +1,23 @@
+(strategy (observations 1))
+
+(define-program original
+  (let sum int 0)
+  (while (<= sum 100)
+    (let r int (nondet (min 0) (max 9)))
+    (set sum (+ sum r)))
+  (observe))
+
+(define-program refinement
+  (let sum int 0)
+  (while (<= sum 100)
+    (let r int (nondet (min 0) (max 10)))
+    (set sum (+ sum r)))
+  (observe))
+
+(find-counterexample
+  (forall (traces refinement)
+    (exists (traces original)
+      (= (trace-value original sum) (trace-value refinement sum)))))
+
+(expect (outcome counterexample))
+(print-stats)

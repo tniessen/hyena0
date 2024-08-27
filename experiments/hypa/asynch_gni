@@ -1,0 +1,47 @@
+; Derived from benchmarks/beyond/asynch_gni in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts
+  (let o int 0)
+  (let h int (nondet))
+  (repeat
+    (observe)
+    (if (> h 5)
+      (then (set o (+ o (nondet))))
+      (else
+        (let t int (+ o (nondet)))
+        (set o t)))))
+
+(expect (control-flow-graph ts
+  (declare o int)
+  (declare h int)
+  (declare t int)
+  (init 0)
+  (block 0
+    (steps
+      (set o 0)
+      (set h (nondet)))
+    (next 1))
+  (block 1
+    (steps (observe))
+    (next ((> h 5) 2 3)))
+  (block 2
+    (steps (set o (+ o (nondet))))
+    (next 1))
+  (block 3
+    (steps
+      (set t (+ o (nondet)))
+      (set o t))
+    (next 1))))
+
+(strategy (observations (max 25)))
+
+(find-counterexample
+  (forall (traces ts a)
+    (exists (traces ts b)
+      (= (trace-value a o) (trace-value b o)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

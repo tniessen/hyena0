@@ -1,0 +1,26 @@
+(define-program 13*x+3-sequential
+  (let x int 0)
+  (let y int)
+  (repeat
+    (set y (+ (* 13 x) 3))
+    (observe)
+    (set x (+ x 1))))
+
+(define-program 11*x+45-sequential
+  (let x int 0)
+  (let y int)
+  (repeat
+    (set y (+ (* 11 x) 45))
+    (observe)
+    (set x (+ x 1))))
+
+; (strategy (observations 22))
+
+(find-counterexample
+  (forall (traces 13*x+3-sequential f)
+    (exists (traces 11*x+45-sequential g)
+      (and (= (trace-value f x) (trace-value g x))
+           (/= (trace-value f y) (trace-value g y))))))
+
+(expect (outcome counterexample))
+(print-stats)

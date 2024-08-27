@@ -1,0 +1,181 @@
+(define-program a
+  (observe))
+
+(expect (control-flow-graph a
+  (init 0)
+  (block 0
+    (steps (observe))
+    (next (halt)))))
+
+(expect (control-flow-graph (product a a)
+  (init 0)
+  (block 0
+    (steps)
+    (next 4))
+  (block 1
+    (steps)
+    (next (halt)))
+  (block 2
+    (steps)
+    (next 6))
+  (block 3
+    (steps)
+    (next (halt)))
+  (block 4
+    (steps)
+    (next 5))
+  (block 5
+    (steps (observe))
+    (next 3))
+  (block 6
+    (steps)
+    (next (halt)))))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces a u0)
+    (exists (traces a e0)
+      true)))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces a u0)
+    (exists (traces a e0)
+      false)))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces a u0)
+    (forall (traces a u1)
+      (exists (traces a e0)
+        true))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces a u0)
+    (forall (traces a u1)
+      (exists (traces a e0)
+        false))))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces a u0)
+    (forall (traces a u1)
+      (forall (traces a u2)
+        (exists (traces a e0)
+          true)))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces a u0)
+    (forall (traces a u1)
+      (forall (traces a u2)
+        (exists (traces a e0)
+          false)))))
+
+(expect (outcome counterexample))
+
+(define-program b
+  (if (nondet) (then (observe))
+               (else (observe))))
+
+(expect (control-flow-graph b
+  (init ((nondet) 0 1))
+  (block 0
+    (steps (observe))
+    (next (halt)))
+  (block 1
+    (steps (observe))
+    (next (halt)))))
+
+(strategy (observations (max 5)))
+
+(define-program c
+  (let x int 0)
+  (repeat
+    (set x (+ x (nondet (min 0))))
+    (observe)))
+
+(expect (control-flow-graph c
+  (declare x int)
+  (init 0)
+  (block 0
+    (steps
+      (set x 0))
+    (next 1))
+  (block 1
+    (steps
+      (set x (+ x (nondet (min 0))))
+      (observe))
+    (next 1))))
+
+(define-program d
+  (let y int 0)
+  (repeat
+    (set y (+ y (nondet (min 0))))
+    (observe)))
+
+(expect (control-flow-graph d
+  (declare y int)
+  (init 0)
+  (block 0
+    (steps
+      (set y 0))
+    (next 1))
+  (block 1
+    (steps
+      (set y (+ y (nondet (min 0))))
+      (observe))
+    (next 1))))
+
+(find-counterexample
+  (forall (traces c u0)
+    (forall (traces d u1)
+      (exists (traces d e0)
+        (= (trace-value e0 y) (+ x (trace-value u1 y)))))))
+
+(expect (outcome no-counterexample))
+
+(define-program e
+  (let z int 0)
+  (repeat
+    (observe)
+    (set z (+ z (nondet)))))
+
+(find-counterexample
+  (forall (traces c)
+    (forall (traces d)
+      (exists (traces e)
+        (= z (+ x y))))))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces c)
+    (exists (traces d)
+      (exists (traces e)
+        (= z (+ x y))))))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces c)
+    (exists (traces d)
+      (exists (traces e)
+        (= z (- x y))))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces c)
+    (exists (traces d)
+      (exists (traces e)
+        (= y (+ x z))))))
+
+(expect (outcome no-counterexample))

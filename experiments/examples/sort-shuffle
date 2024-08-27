@@ -1,0 +1,183 @@
+(strategy (observations 1))
+
+(define-program sort
+  (let in1 int (nondet))
+  (let in2 int (nondet))
+  (let in3 int (nondet))
+  (let out1 int in1)
+  (let out2 int in2)
+  (let out3 int in3)
+  (let t int)
+  (if (< out2 out1)
+    (then
+      (set t out1)
+      (set out1 out2)
+      (set out2 t)))
+  (if (< out3 out2)
+    (then
+      (set t out2)
+      (set out2 out3)
+      (set out3 t)))
+  (if (< out2 out1)
+    (then
+      (set t out1)
+      (set out1 out2)
+      (set out2 t)))
+  (observe))
+
+(define-program shuffle
+  (let in1 int (nondet))
+  (let in2 int (nondet))
+  (let in3 int (nondet))
+  (let out1 int)
+  (let out2 int)
+  (let out3 int)
+  (if (nondet)
+    (then
+      (if (nondet)
+        (then
+          (set out1 in1)
+          (set out2 in2)
+          (set out3 in3))
+        (else
+          (set out1 in1)
+          (set out2 in3)
+          (set out3 in2))))
+    (else
+      (if (nondet)
+        (then
+          (if (nondet)
+            (then
+              (set out1 in2)
+              (set out2 in1)
+              (set out3 in3))
+            (else
+              (set out1 in2)
+              (set out2 in3)
+              (set out3 in1))))
+        (else
+          (if (nondet)
+            (then
+              (set out1 in3)
+              (set out2 in1)
+              (set out3 in2))
+            (else
+              (set out1 in3)
+              (set out2 in2)
+              (set out3 in1)))))))
+  (observe))
+
+(find-counterexample
+  (forall (traces sort)
+    (exists (traces shuffle)
+      (and (= (trace-value sort in1) (trace-value shuffle in1))
+           (= (trace-value sort in2) (trace-value shuffle in2))
+           (= (trace-value sort in3) (trace-value shuffle in3))
+           (= (trace-value sort out1) (trace-value shuffle out1))
+           (= (trace-value sort out2) (trace-value shuffle out2))
+           (= (trace-value sort out3) (trace-value shuffle out3))))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces shuffle)
+    (exists (traces sort)
+      (and (= (trace-value sort in1) (trace-value shuffle in1))
+           (= (trace-value sort in2) (trace-value shuffle in2))
+           (= (trace-value sort in3) (trace-value shuffle in3))
+           (= (trace-value sort out1) (trace-value shuffle out1))
+           (= (trace-value sort out2) (trace-value shuffle out2))
+           (= (trace-value sort out3) (trace-value shuffle out3))))))
+
+(expect (outcome counterexample))
+
+(define-program sort-swap-loop
+  (let in1 int (nondet))
+  (let in2 int (nondet))
+  (let in3 int (nondet))
+  (let out1 int in1)
+  (let out2 int in2)
+  (let out3 int in3)
+  (let sorted int 0)
+  (let t int)
+  (while (= sorted 0)
+    (if (< out3 out1)
+      (then
+        (set t out1)
+        (set out1 out3)
+        (set out3 t))
+      (else
+        (set t out1)
+        (set out1 out2)
+        (set out2 t)))
+    (if (<= out1 out2)
+      (then
+        (if (<= out2 out3)
+          (then
+            (set sorted 1))))))
+  (observe))
+
+(expect (control-flow-graph sort-swap-loop
+  (declare in1 int)
+  (declare in2 int)
+  (declare in3 int)
+  (declare out1 int)
+  (declare out2 int)
+  (declare out3 int)
+  (declare sorted int)
+  (declare t int)
+  (init 0)
+  (block 0
+    (steps
+      (set in1 (nondet))
+      (set in2 (nondet))
+      (set in3 (nondet))
+      (set out1 in1)
+      (set out2 in2)
+      (set out3 in3)
+      (set sorted 0))
+    (next ((= sorted 0) ((< out3 out1) 1 2) 4)))
+  (block 1
+    (steps
+      (set t out1)
+      (set out1 out3)
+      (set out3 t))
+    (next ((<= out1 out2) ((<= out2 out3) 3 ((= sorted 0) ((< out3 out1) 1 2) 4)) ((= sorted 0) ((< out3 out1) 1 2) 4))))
+  (block 2
+    (steps
+      (set t out1)
+      (set out1 out2)
+      (set out2 t))
+    (next ((<= out1 out2) ((<= out2 out3) 3 ((= sorted 0) ((< out3 out1) 1 2) 4)) ((= sorted 0) ((< out3 out1) 1 2) 4))))
+  (block 3
+    (steps
+      (set sorted 1))
+    (next ((= sorted 0) ((< out3 out1) 1 2) 4)))
+  (block 4
+    (steps
+      (observe))
+    (next (halt)))))
+
+(find-counterexample
+  (forall (traces sort-swap-loop sort)
+    (exists (traces shuffle)
+      (and (= (trace-value sort in1) (trace-value shuffle in1))
+           (= (trace-value sort in2) (trace-value shuffle in2))
+           (= (trace-value sort in3) (trace-value shuffle in3))
+           (= (trace-value sort out1) (trace-value shuffle out1))
+           (= (trace-value sort out2) (trace-value shuffle out2))
+           (= (trace-value sort out3) (trace-value shuffle out3))))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces shuffle)
+    (exists (traces sort-swap-loop sort)
+      (and (= (trace-value sort in1) (trace-value shuffle in1))
+           (= (trace-value sort in2) (trace-value shuffle in2))
+           (= (trace-value sort in3) (trace-value shuffle in3))
+           (= (trace-value sort out1) (trace-value shuffle out1))
+           (= (trace-value sort out2) (trace-value shuffle out2))
+           (= (trace-value sort out3) (trace-value shuffle out3))))))
+
+(expect (outcome counterexample))

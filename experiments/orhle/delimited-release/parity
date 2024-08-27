@@ -1,0 +1,37 @@
+(define-program parity
+  (let hIn int (nondet))
+  (let lIn int (nondet))
+
+  (let h int hIn)
+  (let l int lIn)
+  (if (divided-by h 2)
+    (then
+      (set l 0)
+      (set h 0))
+    (else
+      (set l 1)
+      (set h 1)))
+
+  (observe))
+
+(define-program input-driver
+  (let hIn int (nondet))
+  (let lIn int (nondet))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces parity u)
+    (forall (traces input-driver e-input)
+      (exists (traces parity e)
+        (=> (and (= (trace-value u lIn) (trace-value e-input lIn))
+                 (<=> (divided-by (trace-value u hIn) 2)
+                      (divided-by (trace-value e-input hIn) 2)))
+            (and (= (trace-value e-input lIn) (trace-value e lIn))
+                 (= (trace-value e-input hIn) (trace-value e hIn))
+
+                 (= (trace-value u l) (trace-value e l))))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

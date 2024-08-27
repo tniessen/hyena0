@@ -1,0 +1,80 @@
+(strategy (observations 1))
+
+(define-program original
+  (let list0 int (nondet))
+  (let list1 int (nondet))
+  (let list2 int (nondet))
+
+  (let sorted0 int list0)
+  (let sorted1 int list1)
+  (let sorted2 int list2)
+
+  (let t int)
+
+  (if (> sorted0 sorted1)
+    (then
+      (set t sorted0)
+      (set sorted0 sorted1)
+      (set sorted1 t)))
+  (if (> sorted1 sorted2)
+    (then
+      (set t sorted1)
+      (set sorted1 sorted2)
+      (set sorted2 t)))
+  (if (> sorted0 sorted1)
+    (then
+      (set t sorted0)
+      (set sorted0 sorted1)
+      (set sorted1 t)))
+
+  (let ret0 int (+ sorted0 3))
+  (let ret1 int (+ sorted1 3))
+  (let ret2 int (+ sorted2 3))
+
+  (observe))
+
+(define-program refinement
+  (let list0 int (nondet))
+  (let list1 int (nondet))
+  (let list2 int (nondet))
+
+  (let shuffled0 int list0)
+  (let shuffled1 int list1)
+  (let shuffled2 int list2)
+
+  (let t int)
+
+  (if (nondet)
+    (then
+      (set t shuffled0)
+      (set shuffled0 shuffled1)
+      (set shuffled1 t)))
+  (if (nondet)
+    (then
+      (set t shuffled1)
+      (set shuffled1 shuffled2)
+      (set shuffled2 t)))
+  (if (nondet)
+    (then
+      (set t shuffled0)
+      (set shuffled0 shuffled1)
+      (set shuffled1 t)))
+
+  (let ret0 int (+ shuffled0 3))
+  (let ret1 int (+ shuffled1 3))
+  (let ret2 int (+ shuffled2 3))
+
+  (observe))
+
+(find-counterexample
+  (forall (traces refinement)
+    (exists (traces original)
+      (and (and (= (trace-value original list0) (trace-value refinement list0))
+                (= (trace-value original list1) (trace-value refinement list1))
+                (= (trace-value original list2) (trace-value refinement list2)))
+           (and (= (trace-value original ret0) (trace-value refinement ret0))
+                (= (trace-value original ret1) (trace-value refinement ret1))
+                (= (trace-value original ret2) (trace-value refinement ret2)))))))
+
+(expect (outcome counterexample))
+(print-stats)

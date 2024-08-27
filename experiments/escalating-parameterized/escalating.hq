@@ -1,0 +1,1 @@
+forall A. exists B. G (*y[A] = y[B]* /\ ok[B])

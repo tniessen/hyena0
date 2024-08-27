@@ -1,0 +1,26 @@
+(define-program run
+  (let high int (nondet))
+  (let highDriver int (nondet))
+  (let low int (nondet))
+  (let out int)
+
+  (if (< low high)
+    (then (set out 0))
+    (else (set out 1)))
+
+  (if (nondet)
+    (then (set out (- 1 out))))
+
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces run u)
+    (exists (traces run e)
+      (and (= (trace-value u low)        (trace-value e low))
+           (= (trace-value u highDriver) (trace-value e high))
+           (= (trace-value u out)        (trace-value e out))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

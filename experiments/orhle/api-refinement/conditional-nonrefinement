@@ -1,0 +1,25 @@
+(define-program original
+  (let r int (nondet (min 0) (max 1)))
+  (let ret int)
+  (if (= r 0)
+    (then (set ret 10))
+    (else (set ret 20)))
+  (observe))
+
+(define-program refinement
+  (let r int (nondet (min 0) (max 1)))
+  (let ret int)
+  (if (= r 0)
+    (then (set ret 10))
+    (else (set ret 30)))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces refinement)
+    (exists (traces original)
+      (= (trace-value original ret) (trace-value refinement ret)))))
+
+(expect (outcome counterexample))
+(print-stats)

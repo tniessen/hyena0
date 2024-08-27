@@ -1,0 +1,29 @@
+-- This is the parameterized version of the benchmark. A counterexample exists
+-- within {{N_MIN_OBS}} observations. At that point, the value of x will be at most {{MAX_VALUE_OF_X}}
+-- and the value of y will be at most {{MAX_VALUE_OF_Y}}. The value of max in the second
+-- program will be at most {{MAX_VALUE_OF_MAX}}.
+
+-- The following field is used by the script that runs the benchmark:
+-- BENCHMARK_UNWINDING_DEPTH={{N_MIN_OBS}}
+
+MODULE main
+
+VAR
+  x: 0..{{MAX_VALUE_OF_X}};
+  y: 0..{{MAX_VALUE_OF_Y}};
+
+ASSIGN
+  init(x) := 0;
+  init(y) := 0;
+
+  -- The value of x will not exceed {{MAX_VALUE_OF_X}} until after a counterexample exists.
+  next(x) := { ((x + 1) mod {{MAX_VALUE_OF_X_PLUS_1}}), ((x + 2) mod {{MAX_VALUE_OF_X_PLUS_1}}) };
+
+  -- The value of y will not exceed {{MAX_VALUE_OF_Y}} until after a counterexample exists.
+  next(y) :=
+    case
+      (0 = (x mod 2)) : (y + 1) mod {{MAX_VALUE_OF_Y_PLUS_1}};
+      (1 = (x mod 2)) : (y + x) mod {{MAX_VALUE_OF_Y_PLUS_1}};
+    esac;
+
+DEFINE

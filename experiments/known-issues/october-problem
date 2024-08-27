@@ -1,0 +1,22 @@
+; This encodes what Tobias calls the "October problem". Note that the program
+; does not diverge since the runtime between observation points is bounded by a
+; constant. The property does not hold, yet we can never show this using bounded
+; model checking.
+
+(define-program dummy
+  (repeat
+    (observe)))
+
+(define-program problematic
+  (let a int 0)
+  (let b int (nondet))
+  (repeat
+    (observe)
+    (set a (+ a 1))))
+
+(find-counterexample
+  (forall (traces dummy)
+    (exists (traces problematic)
+      (/= a b))))
+
+(expect (outcome counterexample))

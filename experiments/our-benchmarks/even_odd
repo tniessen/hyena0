@@ -1,0 +1,17 @@
+(define-program even
+  (let x int (* 2 (nondet)))
+  (observe))
+
+(define-program odd
+  (let x int (+ 1 (* 2 (nondet))))
+  (observe))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces even)
+    (exists (traces odd)
+      (= (trace-value even x) (trace-value odd x)))))
+
+(expect (outcome counterexample))
+(print-stats)

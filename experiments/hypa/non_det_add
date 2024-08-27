@@ -1,0 +1,31 @@
+; Derived from benchmarks/beyond/non_det_add in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts1
+  (let o int 0)
+  (repeat
+    (observe)
+    (if (nondet)
+      (then
+        (set o (+ o 2)))
+      (else
+        (set o (+ o 1))))))
+
+(define-program ts2
+  (let o int 0)
+  (repeat
+    (observe)
+    (let x int (nondet))
+    (set o (+ o x))))
+
+(strategy (observations (max 10)))
+
+(find-counterexample
+  (forall (traces ts1)
+    (exists (traces ts2)
+      (= (trace-value ts1 o) (trace-value ts2 o)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

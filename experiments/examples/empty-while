@@ -1,0 +1,14 @@
+(define-program empty-while
+  (let x int 0)
+  (while (> x 0)))
+
+(expect (control-flow-graph empty-while
+  (declare x int)
+  (init 0)
+  (block 0
+    (steps
+      (set x 0))
+    (next ((> x 0) 1 (halt))))
+  (block 1
+    (steps)
+    (next ((> x 0) 1 (halt))))))

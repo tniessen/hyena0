@@ -1,0 +1,39 @@
+; This works because our symbolic execution engine prefers the if-then branch
+; over the if-else branch.
+
+(strategy (observations 1))
+
+(define-program unbounded-loop
+  (let n int (nondet))
+  (let i int 0)
+  (repeat
+    (if (>= i n) (then (observe))
+      (else (set i (+ i 1))))))
+
+(expect (control-flow-graph unbounded-loop
+  (declare n int)
+  (declare i int)
+  (init 0)
+  (block 0
+    (steps
+      (set n (nondet))
+      (set i 0))
+    (next ((>= i n) 1 2)))
+  (block 1
+    (steps (observe))
+    (next ((>= i n) 1 2)))
+  (block 2
+    (steps
+      (set i (+ i 1)))
+    (next ((>= i n) 1 2)))))
+
+(define-program max-123
+  (let i int (nondet (max 123)))
+  (observe))
+
+(find-counterexample
+  (forall (traces unbounded-loop)
+    (exists (traces max-123)
+      (= (trace-value unbounded-loop i) (trace-value max-123 i)))))
+
+(expect (outcome counterexample))

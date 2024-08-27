@@ -1,0 +1,24 @@
+; This program always computes the value 11 for x.
+(define-program foo
+  (let x int 0)
+  (while (< x 11)
+    (set x (+ x 1)))
+  (observe))
+
+; This program produces either an (even or odd) negative value or an even
+; non-negative value for x.
+(define-program bar
+  (let x int (nondet))
+  (if (> x 0) (then (set x (+ x x))))
+  (observe))
+
+; The first program produces an odd positive integer, but every odd intege
+; produced by the second program is negative, so the first program does not
+; refine the second.
+(find-counterexample
+  (forall (traces foo)
+    (exists (traces bar)
+      (= (trace-value foo x) (trace-value bar x)))))
+
+(expect (outcome counterexample))
+(print-stats)

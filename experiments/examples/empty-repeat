@@ -1,0 +1,8 @@
+(define-program empty-repeat
+  (repeat))
+
+(expect (control-flow-graph empty-repeat
+  (init 0)
+  (block 0
+    (steps)
+    (next 0))))

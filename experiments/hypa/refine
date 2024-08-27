@@ -1,0 +1,88 @@
+; Derived from benchmarks/beyond/refine in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+; The property, as defined in benchmarks/beyond/refine/aut, does not appear to
+; correctly specify the intended refinement property. Therefore, we test
+; multiple different properties here.
+
+(define-program ts
+  (let x int)
+  (let c int)
+  (if (nondet)
+    (then
+      (set x 0)
+      (set c 0)
+      (repeat
+        (observe)
+        (set x (+ x 1))))
+    (else
+      (set x 0)
+      (set c 1)
+      (repeat
+        (observe)
+        (set x (+ x (nondet (min 1))))))))
+
+(expect (control-flow-graph ts
+  (declare x int)
+  (declare c int)
+  (init ((nondet) 0 2))
+  (block 0
+    (steps
+      (set x 0)
+      (set c 0))
+    (next 1))
+  (block 1
+    (steps
+      (observe)
+      (set x (+ x 1)))
+    (next 1))
+  (block 2
+    (steps
+      (set x 0)
+      (set c 1))
+    (next 3))
+  (block 3
+    (steps
+      (observe)
+      (set x (+ x (nondet (min 1)))))
+    (next 3))))
+
+(strategy (observations (max 10)))
+
+(find-counterexample
+  (forall (traces ts a)
+    (exists (traces ts b)
+      (and (= (trace-value a c) (trace-value b c))
+           (= (trace-value a x) (trace-value b x))))))
+
+(expect (outcome no-counterexample))
+
+;; (find-counterexample
+;;   (forall (traces ts a)
+;;     (exists (traces ts b)
+;;       (=> (= (trace-value a c) 0)
+;;           (and (= (trace-value b c) 1)
+;;                (= (trace-value a x) (trace-value b x)))))))
+
+;; (expect (outcome no-counterexample))
+
+;; (find-counterexample
+;;   (forall (traces ts a)
+;;     (exists (traces ts b)
+;;       (=> (= (trace-value a c) 1)
+;;           (and (= (trace-value b c) 0)
+;;                (= (trace-value a x) (trace-value b x)))))))
+
+;; (expect (outcome counterexample))
+
+;; (find-counterexample
+;;   (forall (traces ts a)
+;;     (exists (traces ts b)
+;;       (and (/= (trace-value a c) (trace-value b c))
+;;            (= (trace-value a x) (trace-value b x))))))
+
+;; (expect (outcome counterexample))
+
+(print-stats)

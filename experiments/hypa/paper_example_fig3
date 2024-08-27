@@ -1,0 +1,86 @@
+; Derived from benchmarks/beyond/paper_example_fig3 in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program first
+  (let a int 0)
+  (repeat
+    (observe)
+    (let x int (nondet))
+    (while (nondet)
+      (set x (+ x 1)))
+    (let y int x)
+    (while (> y 0)
+      (set a (+ a x))
+      (set y (- y 1)))))
+
+(expect (control-flow-graph first
+  (declare a int)
+  (declare x int)
+  (declare y int)
+  (init 0)
+  (block 0
+    (steps (set a 0))
+    (next 1))
+  (block 1
+    (steps
+      (observe)
+      (set x (nondet)))
+    (next ((nondet) 2 3)))
+  (block 2
+    (steps (set x (+ x 1)))
+    (next ((nondet) 2 3)))
+  (block 3
+    (steps (set y x))
+    (next ((> y 0) 4 1)))
+  (block 4
+    (steps
+      (set a (+ a x))
+      (set y (- y 1)))
+    (next ((> y 0) 4 1)))))
+
+(define-program second
+  (let a int 0)
+  (repeat
+    (observe)
+    (let x int (nondet))
+    (let y int x)
+    (while (> y 0)
+      (set a (+ a x))
+      (set y (- y 1)))
+    (set x 0)))
+
+(expect (control-flow-graph second
+  (declare a int)
+  (declare x int)
+  (declare y int)
+  (init 0)
+  (block 0
+    (steps (set a 0))
+    (next 1))
+  (block 1
+    (steps
+      (observe)
+      (set x (nondet))
+      (set y x))
+    (next ((> y 0) 2 3)))
+  (block 2
+    (steps
+      (set a (+ a x))
+      (set y (- y 1)))
+    (next ((> y 0) 2 3)))
+  (block 3
+    (steps
+      (set x 0))
+    (next 1))))
+
+(strategy (observations (max 2)))
+
+(find-counterexample
+  (forall (traces first pi1)
+    (exists (traces second pi2)
+      (= (trace-value pi1 a) (trace-value pi2 a)))))
+
+(expect (outcome no-counterexample))
+(print-stats)

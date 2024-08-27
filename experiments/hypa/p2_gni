@@ -1,0 +1,28 @@
+; Derived from benchmarks/beyond/p2_gni in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts
+  (let h int 0)
+  (let l int 0)
+  (let b int 0)
+  (repeat
+    (observe)
+    (set b l)
+    (set h (nondet))
+    (set l (nondet))
+    (set b (+ b l))))
+
+(strategy (observations (max 10)))
+
+(find-counterexample
+  (forall (traces ts pi1)
+    (forall (traces ts pi2)
+      (exists (traces ts pi3)
+        (and (= (trace-value pi3 h) (trace-value pi2 h))
+             (= (trace-value pi3 l) (trace-value pi1 l))
+             (= (trace-value pi3 b) (trace-value pi1 b)))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

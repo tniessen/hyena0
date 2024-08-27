@@ -1,0 +1,57 @@
+(strategy (observations 1))
+
+(define-program cond
+  (let l int (nondet))
+  (let h1 int (nondet))
+  (let h2 int (nondet))
+  (let ret int)
+  (if (= l 0)
+    (then
+      (if (divided-by h1 2)
+        (then (set ret 0))
+        (else (set ret 1))))
+    (else
+      (if (divided-by h1 2)
+        (then (set ret 0))
+        (else (set ret 1)))))
+  (observe))
+
+(define-program input-driver
+  (let l int (nondet))
+  (let h1 int (nondet))
+  (let h2 int (nondet))
+  (observe))
+
+(find-counterexample
+  (forall (traces cond cond1)
+    (forall (traces cond cond2)
+      (forall (traces input-driver cond3-input)
+        (exists (traces cond cond3)
+          (=> (and (= (trace-value cond1 h1) (trace-value cond3-input h1))
+                   (= (trace-value cond1 h2) (trace-value cond3-input h2))
+                   (= (trace-value cond1 l) (trace-value cond2 l))
+                   (= (trace-value cond2 l) (trace-value cond3-input l))
+                   (=> (= (trace-value cond1 l) 0)
+                       (and
+                         (<=>
+                           (divided-by (trace-value cond1 h1) 2)
+                           (divided-by (trace-value cond2 h1) 2))
+                         (<=>
+                           (divided-by (trace-value cond2 h1) 2)
+                           (divided-by (trace-value cond3-input h1) 2))))
+                   (=> (/= (trace-value cond1 l) 0)
+                       (and
+                         (<=>
+                           (divided-by (trace-value cond1 h2) 2)
+                           (divided-by (trace-value cond2 h2) 2))
+                         (<=>
+                           (divided-by (trace-value cond2 h2) 2)
+                           (divided-by (trace-value cond3-input h2) 2)))))
+              (and (= (trace-value cond3-input l) (trace-value cond3 l))
+                   (= (trace-value cond3-input h1) (trace-value cond3 h1))
+                   (= (trace-value cond3-input h2) (trace-value cond3 h2))
+
+                   (= (trace-value cond2 ret) (trace-value cond3 ret)))))))))
+
+(expect (outcome counterexample))
+(print-stats)

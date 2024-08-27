@@ -1,0 +1,35 @@
+; This is the parameterized version of the benchmark. A counterexample exists
+; within {{N_MIN_OBS}} observations. At that point, the value of x will be at most {{MAX_VALUE_OF_X}}
+; and the value of y will be at most {{MAX_VALUE_OF_Y}}. The value of max in the second
+; program will be at most {{MAX_VALUE_OF_MAX}}.
+
+(define-program escalating
+  (let x int 0)
+  (let y int 0)
+  (repeat
+    (observe)
+    (if (divided-by x 2)
+      (then (set y (+ y 1)))
+      (else (set y (+ y x))))
+    (set x (+ x (nondet (min 1) (max 2))))))
+
+(define-program max-diff
+  (let max int {{INITIAL_VALUE_OF_MAX}})
+  (repeat
+    (observe)
+    (if (nondet)
+      (then (set max (+ max 1))))))
+
+; This does not help hyena0 because the bug is found before the limit applies.
+; It only serves as a safeguard to ensure that the bug is indeed found in the
+; pre-computed number of observations. Otherwise, the (expect ...) statement
+; below would cause an error.
+(strategy (observations (max {{N_MIN_OBS}})))
+
+(find-counterexample
+  (forall (traces escalating)
+    (exists (traces max-diff)
+      (<= y max))))
+
+(expect (outcome counterexample))
+(print-stats)

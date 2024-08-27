@@ -1,0 +1,26 @@
+; This demonstrates a minor inefficiency in how we generate control flow graphs.
+; The program below should ideally generate the below control flow graph, but
+; our implementation currently adds an unnecessary nondeterminisic choice, which
+; does not affect the behavior of the system, but which adds to the size of our
+; SMT queries.
+
+(define-program repeat-while
+  (let a int 0)
+  (repeat
+    (while (nondet)
+      (set a (+ a 1)))))
+
+(expect (control-flow-graph repeat-while
+  (declare a int)
+  (init 0)
+  (block 0
+    (steps
+      (set a 0))
+    (next ((nondet) 1 2)))
+  (block 1
+    (steps
+      (set a (+ a 1)))
+    (next ((nondet) 1 2)))
+  (block 2
+    (steps)
+    (next ((nondet) 1 2)))))

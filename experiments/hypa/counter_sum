@@ -1,0 +1,22 @@
+; Derived from benchmarks/beyond/counter_sum in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts
+  (let a int 0)
+  (let x int (nondet))
+  (repeat
+    (observe)
+    (set a (+ a x))))
+
+(strategy (observations (max 10)))
+
+(find-counterexample
+  (forall (traces ts pi1)
+    (forall (traces ts pi2)
+      (exists (traces ts pi3)
+        (= (+ (trace-value pi1 a) (trace-value pi2 a)) (trace-value pi3 a))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

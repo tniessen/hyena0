@@ -1,0 +1,131 @@
+(define-program max1
+  (let x int (nondet))
+  (let y int (nondet))
+  (let z int)
+  (repeat
+    (if (>= x y)
+      (then (set z x))
+      (else (set z y)))
+    (observe)
+    (set x (nondet))
+    (set y (nondet))))
+
+(expect (control-flow-graph max1
+  (declare x int)
+  (declare y int)
+  (declare z int)
+  (init 0)
+  (block 0
+    (steps
+      (set x (nondet))
+      (set y (nondet)))
+    (next ((>= x y) 1 2)))
+  (block 1
+    (steps (set z x))
+    (next 3))
+  (block 2
+    (steps (set z y))
+    (next 3))
+  (block 3
+    (steps
+      (observe)
+      (set x (nondet))
+      (set y (nondet)))
+    (next ((>= x y) 1 2)))))
+
+(define-program max2
+  (let x int (nondet))
+  (let y int (nondet))
+  (let z int)
+  (repeat
+    (if (>= x y)
+      (then (set z x))
+      (else (set z y)))
+    (observe)
+    (set x z)
+    (set y (nondet))))
+
+(expect (control-flow-graph max2
+  (declare x int)
+  (declare y int)
+  (declare z int)
+  (init 0)
+  (block 0
+    (steps
+      (set x (nondet))
+      (set y (nondet)))
+    (next ((>= x y) 1 2)))
+  (block 1
+    (steps (set z x))
+    (next 3))
+  (block 2
+    (steps (set z y))
+    (next 3))
+  (block 3
+    (steps
+      (observe)
+      (set x z)
+      (set y (nondet)))
+    (next ((>= x y) 1 2)))))
+
+(define-program random
+  (repeat
+    (let r int (nondet))
+    (observe)))
+
+(expect (control-flow-graph random
+  (declare r int)
+  (init 0)
+  (block 0
+    (steps
+      (set r (nondet))
+      (observe))
+    (next 0))))
+
+(strategy (observations (min 5) (max 10)))
+
+(find-counterexample
+  (forall (traces max1)
+    (exists (traces random)
+      (and (= r z) (/= r x)))))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces max2)
+    (exists (traces random)
+      (and (= r z) (/= r x)))))
+
+(expect (outcome counterexample))
+
+(find-counterexample
+  (forall (traces random)
+    (exists (traces max1)
+      (and (= r z) (/= r x)))))
+
+(expect (outcome no-counterexample))
+
+(find-counterexample
+  (forall (traces random)
+    (exists (traces max1)
+      (and (= r z) (/= r x) (/= r y)))))
+
+(expect (outcome counterexample))
+
+(strategy (observations 1))
+
+(find-counterexample
+  (forall (traces random)
+    (exists (traces max2)
+      (and (= r z) (/= r x)))))
+
+(expect (outcome no-counterexample))
+
+(strategy (observations (min 1)))
+
+(find-counterexample
+  (forall (traces random)
+    (exists (traces max2)
+      (and (= r z) (/= r x)))))
+
+(expect (outcome counterexample))

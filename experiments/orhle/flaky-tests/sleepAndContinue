@@ -1,0 +1,58 @@
+(strategy (observations 1))
+
+(define-program dummy
+  (observe))
+
+(define-program test
+  (let currentTime int (nondet (min 0)))
+  (let lastTime int (- 1))
+  (let currentTotal int 0)
+
+  ; Local variable recordTimestamp().
+  (let elapsedTime int)
+
+  ; Local variable for sleep().
+  (let sleepTime int)
+
+  ; recordTimestamp()
+  (if (>= lastTime 0)
+    (then
+      (set elapsedTime (- currentTime lastTime))
+      (set currentTotal (+ currentTotal elapsedTime))))
+  (set lastTime currentTime)
+
+  ; sleep()
+  (set sleepTime (nondet (min 80) (max 120)))
+  (set currentTime (+ currentTime sleepTime))
+
+  (let counter int 0)
+  (while (< counter 5)
+    ; recordTimestamp()
+    (if (>= lastTime 0)
+      (then
+        (set elapsedTime (- currentTime lastTime))
+        (set currentTotal (+ currentTotal elapsedTime))))
+    (set lastTime currentTime)
+
+    ; sleep()
+    (set sleepTime (nondet (min 80) (max 120)))
+    (set currentTime (+ currentTime sleepTime))
+
+    (set counter (+ counter 1)))
+
+  (let success int)
+  (if (= currentTotal 500)
+    (then (set success 1))
+    (else (set success 0)))
+
+  (observe))
+
+(find-counterexample
+  (forall (traces dummy)
+    (exists (traces test test1)
+      (exists (traces test test2)
+        (/= (trace-value test1 success)
+            (trace-value test2 success))))))
+
+(expect (outcome no-counterexample))
+(print-stats)

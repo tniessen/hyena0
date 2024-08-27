@@ -1,0 +1,39 @@
+; Derived from benchmarks/beyond/smaller in the hypa repository, which
+; accompanies Raven Beutner and Bernd Finkbeiner. Software Verification of
+; Hyperproperties Beyond k-Safety. CAV 2022.
+; See https://github.com/hypa-tool/hypa/tree/30fae4f17fbdb03a0acbf837ccbf2d16e9abebbe/.
+
+(define-program ts
+  (let x int 0)
+  (repeat
+    (observe)
+    (if (nondet)
+      (then (set x (+ x 1)))
+      (else (set x (* 2 x))))))
+
+(expect (control-flow-graph ts
+  (declare x int)
+  (init 0)
+  (block 0
+    (steps
+      (set x 0))
+    (next 1))
+  (block 1
+    (steps (observe))
+    (next ((nondet) 2 3)))
+  (block 2
+    (steps (set x (+ x 1)))
+    (next 1))
+  (block 3
+    (steps (set x (* 2 x)))
+    (next 1))))
+
+(strategy (observations (max 8)))
+
+(find-counterexample
+  (forall (traces ts u)
+    (exists (traces ts e)
+      (<= (trace-value u x) (trace-value e x)))))
+
+(expect (outcome no-counterexample))
+(print-stats)
